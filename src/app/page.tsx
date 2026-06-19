@@ -64,8 +64,9 @@ export default function App() {
       tags: ['#GlobalStandard', '#PolandHub']
     }
   ]);
-  const [activeSource, setActiveSource] = useState(MOCK_SOURCES.aml);
+  const [activeSource, setActiveSource] = useState<typeof MOCK_SOURCES[string] | null>(MOCK_SOURCES.aml);
   const [isTyping, setIsTyping] = useState(false);
+  const [isSourceLoading, setIsSourceLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,6 +94,9 @@ export default function App() {
     e.preventDefault();
     if (!input.trim() || complianceWarning?.severity === 'high') return;
 
+    setIsSourceLoading(true);
+    setActiveSource(null);
+
     const userMessage: Message = { id: Date.now(), sender: 'user', text: input };
     setMessages(prev => [...prev, userMessage]);
     const currentInput = input.toLowerCase();
@@ -101,6 +105,7 @@ export default function App() {
 
     setTimeout(() => {
       setIsTyping(false);
+      setIsSourceLoading(false);
       let aiText = "The policy query has been evaluated against current Polish and European financial frameworks. General operational guidelines permit standard execution paths.";
       let sourceKey = 'aml';
 
@@ -320,42 +325,98 @@ export default function App() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* Active source card */}
-          <div className={`rounded-md border ${srcCard} p-4 space-y-3 transition-colors duration-300`}>
-            <div className="flex items-start justify-between gap-2">
-              <h3 className="text-xs font-bold leading-snug">{activeSource.title}</h3>
-              <span className="shrink-0 text-xs bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1">
-                <CheckCircle size={10} /> {activeSource.veracity}%
-              </span>
-            </div>
-            <p className="text-xs text-[#DB0011] font-medium">{activeSource.section}</p>
-            <p className={`text-xs ${textMute} leading-relaxed`}>{activeSource.text}</p>
-            <p className={`text-xs ${nodeText}`}>{activeSource.date}</p>
-          </div>
-
-          {/* Guardrail status */}
-          <div className={`rounded-md border ${srcCard} p-4 space-y-2 transition-colors duration-300`}>
-            <h3 className="text-xs font-bold flex items-center gap-1.5">
-              <ShieldAlert size={13} className="text-[#DB0011]" /> Active Guardrails
-            </h3>
-            {[
-              { label: 'PII Detection',      active: true  },
-              { label: 'Jurisdiction Filter', active: true  },
-              { label: 'Data Residency',     active: true  },
-              { label: 'Output Redaction',   active: false },
-            ].map(({ label, active }) => (
-              <div key={label} className="flex items-center justify-between text-xs">
-                <span className={textMute}>{label}</span>
-                <span className={`px-1.5 py-0.5 rounded font-medium ${
-                  active
-                    ? 'bg-emerald-500/10 text-emerald-600'
-                    : t(theme, 'bg-slate-700 text-slate-500', 'bg-slate-200 text-slate-500')
-                }`}>
-                  {active ? 'ON' : 'OFF'}
-                </span>
+          {isSourceLoading ? (
+            /* ── SKELETON LOADER ── */
+            <div className="space-y-4">
+              {/* Spinner + label */}
+              <div className="flex flex-col items-center gap-3 py-4">
+                <svg
+                  className="animate-spin h-7 w-7 text-[#DB0011]"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                <p className={`text-xs font-medium text-center ${textMute}`}>
+                  Indexing candidate repository…<br />
+                  <span className="text-[#DB0011] font-semibold">Przeszukiwanie bazy wiedzy</span>
+                </p>
               </div>
-            ))}
-          </div>
+
+              {/* Skeleton source card */}
+              <div className={`rounded-md border ${srcCard} p-4 space-y-3 animate-pulse`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className={`h-3 w-3/4 rounded ${t(theme, 'bg-slate-700', 'bg-slate-200')}`} />
+                  <div className={`h-3 w-8 rounded ${t(theme, 'bg-slate-700', 'bg-slate-200')}`} />
+                </div>
+                <div className={`h-2.5 w-1/2 rounded ${t(theme, 'bg-slate-700', 'bg-slate-200')}`} />
+                <div className="space-y-1.5">
+                  <div className={`h-2 w-full rounded ${t(theme, 'bg-slate-800', 'bg-slate-100')}`} />
+                  <div className={`h-2 w-full rounded ${t(theme, 'bg-slate-800', 'bg-slate-100')}`} />
+                  <div className={`h-2 w-5/6 rounded ${t(theme, 'bg-slate-800', 'bg-slate-100')}`} />
+                  <div className={`h-2 w-4/6 rounded ${t(theme, 'bg-slate-800', 'bg-slate-100')}`} />
+                </div>
+                <div className={`h-2 w-1/3 rounded ${t(theme, 'bg-slate-700', 'bg-slate-200')}`} />
+              </div>
+
+              {/* Skeleton guardrails card */}
+              <div className={`rounded-md border ${srcCard} p-4 space-y-3 animate-pulse`}>
+                <div className={`h-3 w-2/5 rounded ${t(theme, 'bg-slate-700', 'bg-slate-200')}`} />
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className={`h-2.5 w-1/3 rounded ${t(theme, 'bg-slate-800', 'bg-slate-100')}`} />
+                    <div className={`h-2.5 w-8 rounded ${t(theme, 'bg-slate-800', 'bg-slate-100')}`} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : activeSource ? (
+            /* ── LOADED CONTENT ── */
+            <>
+              <div className={`rounded-md border ${srcCard} p-4 space-y-3 transition-colors duration-300`}>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-xs font-bold leading-snug">{activeSource.title}</h3>
+                  <span className="shrink-0 text-xs bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1">
+                    <CheckCircle size={10} /> {activeSource.veracity}%
+                  </span>
+                </div>
+                <p className="text-xs text-[#DB0011] font-medium">{activeSource.section}</p>
+                <p className={`text-xs ${textMute} leading-relaxed`}>{activeSource.text}</p>
+                <p className={`text-xs ${nodeText}`}>{activeSource.date}</p>
+              </div>
+
+              <div className={`rounded-md border ${srcCard} p-4 space-y-2 transition-colors duration-300`}>
+                <h3 className="text-xs font-bold flex items-center gap-1.5">
+                  <ShieldAlert size={13} className="text-[#DB0011]" /> Active Guardrails
+                </h3>
+                {[
+                  { label: 'PII Detection',      active: true  },
+                  { label: 'Jurisdiction Filter', active: true  },
+                  { label: 'Data Residency',      active: true  },
+                  { label: 'Output Redaction',    active: false },
+                ].map(({ label, active }) => (
+                  <div key={label} className="flex items-center justify-between text-xs">
+                    <span className={textMute}>{label}</span>
+                    <span className={`px-1.5 py-0.5 rounded font-medium ${
+                      active
+                        ? 'bg-emerald-500/10 text-emerald-600'
+                        : t(theme, 'bg-slate-700 text-slate-500', 'bg-slate-200 text-slate-500')
+                    }`}>
+                      {active ? 'ON' : 'OFF'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            /* ── EMPTY STATE (przed pierwszym zapytaniem po resecie) ── */
+            <div className={`flex flex-col items-center justify-center h-40 gap-2 ${textMute} text-xs text-center`}>
+              <FileText size={28} className="opacity-30" />
+              <p>Wyślij zapytanie, aby załadować źródło regulacyjne.</p>
+            </div>
+          )}
         </div>
 
         <div className={`p-4 border-t ${border} text-xs ${nodeText} text-center`}>
