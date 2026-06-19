@@ -7,13 +7,17 @@ import {
   FileText, Sun, Moon
 } from 'lucide-react';
 
-const MOCK_SOURCES: Record<string, {
+type SourceKey = 'aml' | 'gdpr' | 'designer' | 'aml_eu' | 'aml_pl';
+
+interface Source {
   title: string;
   section: string;
   text: string;
   veracity: number;
   date: string;
-}> = {
+}
+
+const MOCK_SOURCES: Record<SourceKey, Source> = {
   aml: {
     title: "HSBC Global AML Policy v4.2",
     section: "Section 3.14: Transaction Monitoring",
@@ -34,15 +38,32 @@ const MOCK_SOURCES: Record<string, {
     text: "Kasia Rytel - Lead UX/UI Designer with 8+ years of enterprise B2B experience (DPDgroup, Posnet). Core Expertise: Design Systems scale, complex SaaS/IoT logic, and rapid prototyping workflows using Claude Code. Technical alignment: React, Tailwind CSS, WCAG 2.2 accessibility architectures.",
     veracity: 99,
     date: "Verified Candidate Profile"
+  },
+  aml_eu: {
+    title: "EU Anti-Money Laundering Directive V.pdf",
+    section: "Article 14: Enhanced Due Diligence",
+    text: "Financial institutions must apply enhanced customer due diligence measures when establishing business relationships with natural persons or legal entities established in high-risk third countries.",
+    veracity: 89,
+    date: "Updated 6 months ago"
+  },
+  aml_pl: {
+    title: "Polish AML Act 2018 (Ustawa o przeciwdziałaniu praniu pieniędzy).pdf",
+    section: "Rozdział 5: Obowiązki instytucji obowiązanych",
+    text: "Instytucje obowiązane identyfikują ryzyko związane z praniem pieniędzy oraz finansowaniem terroryzmu odnoszące się do ich działalności, uwzględniając czynniki ryzyka dotyczące klientów, państw lub obszarów geograficznych.",
+    veracity: 81,
+    date: "Updated 2 months ago"
   }
 };
+
+// Sources shown in the accordion panel for the 'accordion' scenario
+const ACCORDION_SOURCES: SourceKey[] = ['designer', 'aml_eu', 'aml_pl'];
 
 interface Message {
   id: number;
   sender: 'ai' | 'user';
   text: string;
   tags?: string[];
-  sourceTag?: string;
+  sourceTag?: SourceKey;
 }
 
 interface ComplianceWarning {
@@ -54,7 +75,6 @@ const SCOPE_TAGS = ['#AML', '#GDPR', '#KYC', '#Basel III'];
 
 type Theme = 'dark' | 'light';
 
-// All theme-aware class sets in one place
 function t(theme: Theme, dark: string, light: string) {
   return theme === 'dark' ? dark : light;
 }
@@ -71,9 +91,11 @@ export default function App() {
       tags: ['#GlobalStandard', '#PolandHub']
     }
   ]);
-  const [activeSource, setActiveSource] = useState<typeof MOCK_SOURCES[string] | null>(MOCK_SOURCES.aml);
+  const [activeSource, setActiveSource] = useState<Source | null>(MOCK_SOURCES.aml);
+  const [activeSourceKey, setActiveSourceKey] = useState<SourceKey>('aml');
   const [isTyping, setIsTyping] = useState(false);
   const [isSourceLoading, setIsSourceLoading] = useState(false);
+  const [showAccordion, setShowAccordion] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -97,12 +119,18 @@ export default function App() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
+  const selectSource = (key: SourceKey) => {
+    setActiveSourceKey(key);
+    setActiveSource(MOCK_SOURCES[key]);
+  };
+
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || complianceWarning?.severity === 'high') return;
 
     setIsSourceLoading(true);
     setActiveSource(null);
+    setShowAccordion(false);
 
     const userMessage: Message = { id: Date.now(), sender: 'user', text: input };
     setMessages(prev => [...prev, userMessage]);
@@ -113,10 +141,15 @@ export default function App() {
     setTimeout(() => {
       setIsTyping(false);
       setIsSourceLoading(false);
-      let aiText = "The policy query has been evaluated against current Polish and European financial frameworks. General operational guidelines permit standard execution paths.";
-      let sourceKey = 'aml';
 
-      if (currentInput.includes('designer') || currentInput.includes('claudecode') || currentInput.includes('kasia') || currentInput.includes('poland') || currentInput.includes('find a lead designer')) {
+      let aiText = "The policy query has been evaluated against current Polish and European financial frameworks. General operational guidelines permit standard execution paths.";
+      let sourceKey: SourceKey = 'aml';
+
+      if (currentInput.includes('accordion')) {
+        aiText = "Your cross-border query matched multiple regulatory documents across European and national frameworks. I have clustered 3 relevant sources in the inspector panel. Select any source below to review its verified legal passage.";
+        sourceKey = 'designer';
+        setShowAccordion(true);
+      } else if (currentInput.includes('designer') || currentInput.includes('claudecode') || currentInput.includes('kasia') || currentInput.includes('poland') || currentInput.includes('find a lead designer')) {
         aiText = "Found 1 matching candidate in the Warsaw Hub: Kasia Rytel. Over 8 years of enterprise B2B experience, expert in building scalable design systems, and deploying advanced AI workflows using Claude Code.";
         sourceKey = 'designer';
       } else if (currentInput.includes('aml') || currentInput.includes('transfer')) {
@@ -133,41 +166,43 @@ export default function App() {
         text: aiText,
         sourceTag: sourceKey
       }]);
-      setActiveSource(MOCK_SOURCES[sourceKey]);
+      selectSource(sourceKey);
     }, 1200);
   };
 
-  // ─── Derived theme classes ────────────────────────────────────────────────
-  const bg       = t(theme, 'bg-slate-900',  'bg-white');
-  const bgSide   = t(theme, 'bg-slate-950',  'bg-[#F5F7FA]');
-  const border   = t(theme, 'border-slate-800', 'border-[#E2E8F0]');
-  const textMain = t(theme, 'text-slate-100', 'text-[#1A1A1A]');
-  const textMute = t(theme, 'text-slate-400', 'text-[#595959]');
-  const textDim  = t(theme, 'text-slate-500', 'text-[#595959]');
-  const navHover = t(theme, 'hover:bg-slate-900 hover:text-slate-200', 'hover:bg-slate-200 hover:text-[#1A1A1A]');
-  const navActive= t(theme, 'bg-slate-900 text-white', 'bg-white text-[#1A1A1A] shadow-sm');
-  const chatBg   = t(theme, 'bg-slate-900', 'bg-white');
-  const msgAiBg  = t(theme, 'bg-slate-800/80 border border-slate-700/60 text-slate-200', 'bg-[#F5F7FA] border border-[#E2E8F0] text-[#1A1A1A]');
-  const tagBg    = t(theme, 'bg-slate-900 text-slate-400 border-slate-700', 'bg-white text-[#595959] border-[#E2E8F0]');
-  const inputBg  = t(theme, 'bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-red-500/70', 'bg-white border-[#E2E8F0] text-[#1A1A1A] placeholder:text-[#595959] focus:border-[#DB0011]/60');
-  const footerBg = t(theme, 'bg-slate-950/40', 'bg-[#F5F7FA]');
-  const srcCard  = t(theme, 'border-slate-700/60 bg-slate-800/50', 'border-[#E2E8F0] bg-white');
-  const headerBg = t(theme, 'bg-slate-900/50', 'bg-white/80');
-  const scopeBtn = t(theme, 'border-slate-700 bg-slate-800 hover:border-red-500/50 hover:text-red-400', 'border-[#E2E8F0] bg-white hover:border-[#DB0011]/50 hover:text-[#DB0011]');
-  const nodeText = t(theme, 'text-slate-500', 'text-[#595959]');
-  const disabledBtn = t(theme, 'disabled:bg-slate-700 disabled:text-slate-500', 'disabled:bg-slate-200 disabled:text-slate-400');
-  const typingBg = t(theme, 'bg-slate-800/80 border-slate-700/60 text-slate-400', 'bg-[#F5F7FA] border-[#E2E8F0] text-[#595959]');
-  const dotColor = t(theme, 'bg-slate-400', 'bg-[#595959]');
+  // ─── Theme classes ────────────────────────────────────────────────────────
+  const bg         = t(theme, 'bg-slate-900',  'bg-white');
+  const bgSide     = t(theme, 'bg-slate-950',  'bg-[#F5F7FA]');
+  const border     = t(theme, 'border-slate-800', 'border-[#E2E8F0]');
+  const textMain   = t(theme, 'text-slate-100', 'text-[#1A1A1A]');
+  const textMute   = t(theme, 'text-slate-400', 'text-[#595959]');
+  const textDim    = t(theme, 'text-slate-500', 'text-[#595959]');
+  const navHover   = t(theme, 'hover:bg-slate-900 hover:text-slate-200', 'hover:bg-slate-200 hover:text-[#1A1A1A]');
+  const navActive  = t(theme, 'bg-slate-900 text-white', 'bg-white text-[#1A1A1A] shadow-sm');
+  const chatBg     = t(theme, 'bg-slate-900', 'bg-white');
+  const msgAiBg    = t(theme, 'bg-slate-800/80 border border-slate-700/60 text-slate-200', 'bg-[#F5F7FA] border border-[#E2E8F0] text-[#1A1A1A]');
+  const tagBg      = t(theme, 'bg-slate-900 text-slate-400 border-slate-700', 'bg-white text-[#595959] border-[#E2E8F0]');
+  const inputBg    = t(theme, 'bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-red-500/70', 'bg-white border-[#E2E8F0] text-[#1A1A1A] placeholder:text-[#595959] focus:border-[#DB0011]/60');
+  const footerBg   = t(theme, 'bg-slate-950/40', 'bg-[#F5F7FA]');
+  const srcCard    = t(theme, 'border-slate-700/60 bg-slate-800/50', 'border-[#E2E8F0] bg-white');
+  const headerBg   = t(theme, 'bg-slate-900/50', 'bg-white/80');
+  const scopeBtn   = t(theme, 'border-slate-700 bg-slate-800 hover:border-red-500/50 hover:text-red-400', 'border-[#E2E8F0] bg-white hover:border-[#DB0011]/50 hover:text-[#DB0011]');
+  const nodeText   = t(theme, 'text-slate-500', 'text-[#595959]');
+  const disabledBtn= t(theme, 'disabled:bg-slate-700 disabled:text-slate-500', 'disabled:bg-slate-200 disabled:text-slate-400');
+  const typingBg   = t(theme, 'bg-slate-800/80 border-slate-700/60 text-slate-400', 'bg-[#F5F7FA] border-[#E2E8F0] text-[#595959]');
+  const dotColor   = t(theme, 'bg-slate-400', 'bg-[#595959]');
   const footerNote = t(theme, 'text-slate-600', 'text-[#595959]');
-  const toggleBg = t(theme, 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700', 'bg-white border-[#E2E8F0] text-[#595959] hover:bg-slate-100');
+  const toggleBg   = t(theme, 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700', 'bg-white border-[#E2E8F0] text-[#595959] hover:bg-slate-100');
+  const accItemBg  = t(theme, 'bg-slate-800/60 border-slate-700/60 hover:border-slate-600', 'bg-white border-[#E2E8F0] hover:border-slate-300');
+  const skeletonHi = t(theme, 'bg-slate-700', 'bg-slate-200');
+  const skeletonLo = t(theme, 'bg-slate-800', 'bg-slate-100');
 
   return (
     <div className={`flex h-screen w-screen ${bg} ${textMain} font-sans overflow-hidden transition-colors duration-300`}>
 
-      {/* ── LEFT SIDEBAR ─────────────────────────────────────────────────── */}
+      {/* ── LEFT SIDEBAR ──────────────────────────────────────────────────── */}
       <aside className={`w-64 ${bgSide} border-r ${border} flex-col justify-between p-4 hidden md:flex transition-colors duration-300`}>
         <div>
-          {/* Logo */}
           <div className={`flex items-center gap-2 px-2 py-3 mb-6 border-b ${border}`}>
             <div className="h-6 w-6 bg-red-600 rounded-sm transform rotate-45 flex items-center justify-center">
               <div className="h-2 w-2 bg-white transform -rotate-45" />
@@ -177,7 +212,6 @@ export default function App() {
             </span>
           </div>
 
-          {/* Nav */}
           <nav className="space-y-1">
             <button className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md ${navActive} text-sm font-medium transition-colors`}>
               <Layers size={18} className="text-red-600" /> AI Workspace
@@ -191,7 +225,6 @@ export default function App() {
           </nav>
         </div>
 
-        {/* Bottom controls */}
         <div className={`space-y-1 border-t ${border} pt-4`}>
           <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-md ${textMute} ${navHover} text-sm transition-colors`}>
             <Settings size={16} /> Config
@@ -199,8 +232,6 @@ export default function App() {
           <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-md ${textMute} ${navHover} text-sm transition-colors`}>
             <HelpCircle size={16} /> Docs &amp; Help
           </button>
-
-          {/* Theme toggle */}
           <button
             onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-md ${toggleBg} border text-sm font-medium transition-colors duration-200`}
@@ -211,12 +242,11 @@ export default function App() {
               : <><Moon size={16} className="text-slate-500" /> Dark Mode</>
             }
           </button>
-
           <div className={`px-3 py-2 text-xs ${nodeText}`}>Node: PL-KRAKOW-PROD</div>
         </div>
       </aside>
 
-      {/* ── CENTRAL CHAT ─────────────────────────────────────────────────── */}
+      {/* ── CENTRAL CHAT ──────────────────────────────────────────────────── */}
       <main className={`flex-1 flex flex-col min-w-0 ${chatBg} transition-colors duration-300`}>
         <header className={`h-14 border-b ${border} flex items-center px-6 gap-3 ${headerBg} backdrop-blur-sm transition-colors duration-300`}>
           <h2 className="text-sm font-semibold tracking-wide">AIMS CENTRAL INTELLIGENCE</h2>
@@ -243,7 +273,7 @@ export default function App() {
                 )}
                 {msg.sourceTag && (
                   <button
-                    onClick={() => setActiveSource(MOCK_SOURCES[msg.sourceTag!])}
+                    onClick={() => selectSource(msg.sourceTag!)}
                     className="mt-3 flex items-center gap-1.5 text-xs text-[#DB0011] font-semibold hover:opacity-75 transition-opacity"
                   >
                     <BookOpen size={12} /> Inspect Verified Regulatory Source
@@ -271,14 +301,10 @@ export default function App() {
         {/* Input area */}
         <div className={`p-4 border-t ${border} ${footerBg} transition-colors duration-300`}>
           <form onSubmit={handleSend} className="max-w-4xl mx-auto space-y-3">
-
-            {/* Scope quick-select */}
             <div className={`flex flex-wrap gap-1.5 items-center text-xs ${textDim}`}>
               <span>Scope:</span>
               {SCOPE_TAGS.map(tag => (
-                <button
-                  key={tag}
-                  type="button"
+                <button key={tag} type="button"
                   onClick={() => setInput(prev => prev ? `${prev} ${tag}` : tag)}
                   className={`px-2 py-0.5 rounded border ${scopeBtn} transition-colors`}
                 >
@@ -287,12 +313,11 @@ export default function App() {
               ))}
             </div>
 
-            {/* Compliance warning */}
             {complianceWarning && (
               <div className={`flex items-start gap-2 px-3 py-2 rounded-md text-xs border ${
                 complianceWarning.severity === 'high'
-                  ? 'bg-red-50 border-red-300 text-red-700 dark:bg-red-950/60 dark:border-red-700/60 dark:text-red-300'
-                  : 'bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-950/60 dark:border-amber-700/60 dark:text-amber-300'
+                  ? 'bg-red-50 border-red-300 text-red-700'
+                  : 'bg-amber-50 border-amber-300 text-amber-700'
               }`}>
                 {complianceWarning.severity === 'high'
                   ? <ShieldAlert size={14} className="mt-0.5 shrink-0" />
@@ -302,7 +327,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Text input + send */}
             <div className="flex gap-2">
               <input
                 type="text"
@@ -327,63 +351,94 @@ export default function App() {
         </div>
       </main>
 
-      {/* ── RIGHT PANEL — SOURCE INSPECTOR ───────────────────────────────── */}
+      {/* ── RIGHT PANEL — SOURCE INSPECTOR ────────────────────────────────── */}
       <aside className={`w-80 ${bgSide} border-l ${border} flex-col hidden lg:flex transition-colors duration-300`}>
         <div className={`h-14 border-b ${border} flex items-center px-4 gap-2`}>
           <FileText size={16} className="text-[#DB0011]" />
           <span className="text-sm font-semibold tracking-wide">Source Inspector</span>
+          {showAccordion && !isSourceLoading && (
+            <span className="ml-auto text-xs bg-[#DB0011]/10 text-[#DB0011] border border-[#DB0011]/20 px-1.5 py-0.5 rounded font-medium">
+              3 sources
+            </span>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {isSourceLoading ? (
-            /* ── SKELETON LOADER ── */
+            /* ── SKELETON ── */
             <div className="space-y-4">
-              {/* Spinner + label */}
               <div className="flex flex-col items-center gap-3 py-4">
-                <svg
-                  className="animate-spin h-7 w-7 text-[#DB0011]"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="animate-spin h-7 w-7 text-[#DB0011]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
-                <p className="text-xs font-medium text-center text-red-500">
-                  Indexing candidate repository…
-                </p>
+                <p className="text-xs font-medium text-center text-red-500">Indexing candidate repository…</p>
               </div>
-
-              {/* Skeleton source card */}
               <div className={`rounded-md border ${srcCard} p-4 space-y-3 animate-pulse`}>
                 <div className="flex items-start justify-between gap-2">
-                  <div className={`h-3 w-3/4 rounded ${t(theme, 'bg-slate-700', 'bg-slate-200')}`} />
-                  <div className={`h-3 w-8 rounded ${t(theme, 'bg-slate-700', 'bg-slate-200')}`} />
+                  <div className={`h-3 w-3/4 rounded ${skeletonHi}`} />
+                  <div className={`h-3 w-8 rounded ${skeletonHi}`} />
                 </div>
-                <div className={`h-2.5 w-1/2 rounded ${t(theme, 'bg-slate-700', 'bg-slate-200')}`} />
+                <div className={`h-2.5 w-1/2 rounded ${skeletonHi}`} />
                 <div className="space-y-1.5">
-                  <div className={`h-2 w-full rounded ${t(theme, 'bg-slate-800', 'bg-slate-100')}`} />
-                  <div className={`h-2 w-full rounded ${t(theme, 'bg-slate-800', 'bg-slate-100')}`} />
-                  <div className={`h-2 w-5/6 rounded ${t(theme, 'bg-slate-800', 'bg-slate-100')}`} />
-                  <div className={`h-2 w-4/6 rounded ${t(theme, 'bg-slate-800', 'bg-slate-100')}`} />
+                  <div className={`h-2 w-full rounded ${skeletonLo}`} />
+                  <div className={`h-2 w-full rounded ${skeletonLo}`} />
+                  <div className={`h-2 w-5/6 rounded ${skeletonLo}`} />
+                  <div className={`h-2 w-4/6 rounded ${skeletonLo}`} />
                 </div>
-                <div className={`h-2 w-1/3 rounded ${t(theme, 'bg-slate-700', 'bg-slate-200')}`} />
+                <div className={`h-2 w-1/3 rounded ${skeletonHi}`} />
               </div>
-
-              {/* Skeleton guardrails card */}
               <div className={`rounded-md border ${srcCard} p-4 space-y-3 animate-pulse`}>
-                <div className={`h-3 w-2/5 rounded ${t(theme, 'bg-slate-700', 'bg-slate-200')}`} />
+                <div className={`h-3 w-2/5 rounded ${skeletonHi}`} />
                 {[1, 2, 3, 4].map(i => (
                   <div key={i} className="flex items-center justify-between">
-                    <div className={`h-2.5 w-1/3 rounded ${t(theme, 'bg-slate-800', 'bg-slate-100')}`} />
-                    <div className={`h-2.5 w-8 rounded ${t(theme, 'bg-slate-800', 'bg-slate-100')}`} />
+                    <div className={`h-2.5 w-1/3 rounded ${skeletonLo}`} />
+                    <div className={`h-2.5 w-8 rounded ${skeletonLo}`} />
                   </div>
                 ))}
               </div>
             </div>
           ) : activeSource ? (
-            /* ── LOADED CONTENT ── */
             <>
+              {/* ── ACCORDION SOURCE LIST (tylko dla scenariusza 'accordion') ── */}
+              {showAccordion && (
+                <div className={`rounded-md border ${srcCard} overflow-hidden`}>
+                  <div className={`px-3 py-2 text-xs font-semibold ${textMute} border-b ${border} uppercase tracking-wider`}>
+                    Matched Documents
+                  </div>
+                  {ACCORDION_SOURCES.map((key) => {
+                    const src = MOCK_SOURCES[key];
+                    const isActive = activeSourceKey === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => selectSource(key)}
+                        className={`w-full flex items-start gap-2.5 px-3 py-2.5 border-b last:border-b-0 ${border} text-left transition-colors ${
+                          isActive
+                            ? 'border-l-2 border-l-[#DB0011] bg-[#DB0011]/5'
+                            : `${accItemBg} border-l-2 border-l-transparent`
+                        }`}
+                      >
+                        <FileText
+                          size={14}
+                          className={`mt-0.5 shrink-0 ${isActive ? 'text-[#DB0011]' : textMute}`}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-medium truncate ${isActive ? 'text-[#DB0011]' : textMain}`}>
+                            {src.title}
+                          </p>
+                          <p className={`text-xs ${textMute} mt-0.5`}>Veracity {src.veracity}%</p>
+                        </div>
+                        {isActive && (
+                          <CheckCircle size={13} className="text-[#DB0011] shrink-0 mt-0.5" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* ── SOURCE DETAIL CARD ── */}
               <div className={`rounded-md border ${srcCard} p-4 space-y-3 transition-colors duration-300`}>
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="text-xs font-bold leading-snug">{activeSource.title}</h3>
@@ -407,6 +462,7 @@ export default function App() {
                 )}
               </div>
 
+              {/* ── GUARDRAILS ── */}
               <div className={`rounded-md border ${srcCard} p-4 space-y-2 transition-colors duration-300`}>
                 <h3 className="text-xs font-bold flex items-center gap-1.5">
                   <ShieldAlert size={13} className="text-[#DB0011]" /> Active Guardrails
@@ -431,10 +487,9 @@ export default function App() {
               </div>
             </>
           ) : (
-            /* ── EMPTY STATE (przed pierwszym zapytaniem po resecie) ── */
             <div className={`flex flex-col items-center justify-center h-40 gap-2 ${textMute} text-xs text-center`}>
               <FileText size={28} className="opacity-30" />
-              <p>Wyślij zapytanie, aby załadować źródło regulacyjne.</p>
+              <p>Send a query to load a verified regulatory source.</p>
             </div>
           )}
         </div>
