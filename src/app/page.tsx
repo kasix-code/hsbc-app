@@ -396,7 +396,7 @@ export default function App() {
                 <p className={`text-xs ${nodeText}`}>{activeSource.date}</p>
                 {activeSource.title.includes('CV') && (
                   <a
-                    href="https://myportfolio.com"
+                    href="https://drive.google.com/file/d/14Fpr3y3ox0yjYpoe2hpfTkIo4HZpZwvs/view?usp=drive_link"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-1 flex items-center justify-center gap-2 w-full px-3 py-2 bg-[#DB0011] hover:bg-[#b8000e] text-white text-xs font-semibold rounded-md transition-colors"
