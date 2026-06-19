@@ -129,10 +129,10 @@
   }
 }
 
-/* Custom slim scrollbar — global */
+/* Custom slim scrollbar — dark (default) */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -143,4 +143,12 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
+}
+
+/* Light mode overrides */
+.light-scrollbar ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+}
+.light-scrollbar ::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }

@@ -205,7 +205,7 @@ export default function App() {
   const skeletonLo = t(theme, 'bg-slate-800', 'bg-slate-100');
 
   return (
-    <div className={`flex h-screen w-screen ${bg} ${textMain} font-sans overflow-hidden transition-colors duration-300`}>
+    <div className={`flex h-screen w-screen ${bg} ${textMain} font-sans overflow-hidden transition-colors duration-300 ${theme === 'light' ? 'light-scrollbar' : ''}`}>
 
       {/* ── LEFT SIDEBAR ──────────────────────────────────────────────────── */}
       <aside className={`w-64 ${bgSide} border-r ${border} flex-col justify-between p-4 hidden md:flex transition-colors duration-300`}>
@@ -269,7 +269,7 @@ export default function App() {
                 msg.sender === 'user'
                   ? t(theme,
                       'bg-slate-800 border border-slate-700 border-l-2 border-l-[#DB0011] text-slate-100 font-medium rounded-tr-none',
-                      'bg-slate-100 border border-slate-200 border-r-2 border-r-slate-400 text-slate-800 font-medium rounded-tr-none'
+                      'bg-slate-200/70 border border-slate-300 border-r-2 border-r-slate-400 text-slate-800 font-medium rounded-tr-none'
                     )
                   : `${msgAiBg} rounded-tl-none`
               } transition-colors duration-300`}>
