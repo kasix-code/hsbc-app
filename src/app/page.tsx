@@ -27,6 +27,13 @@ const MOCK_SOURCES: Record<string, {
     text: "Personal data storage of EU citizens within non-EU server clusters is strictly prohibited unless explicit end-user cryptographic anonymization keys are applied locally prior to transit.",
     veracity: 95,
     date: "Updated 1 month ago"
+  },
+  designer: {
+    title: "Kasia_Rytel_CV_Lead_Designer.pdf",
+    section: "Warsaw Digital Hub / Enterprise Talent Pool",
+    text: "Kasia Rytel - Lead UX/UI Designer with 8+ years of enterprise B2B experience (DPDgroup, Posnet). Core Expertise: Design Systems scale, complex SaaS/IoT logic, and rapid prototyping workflows using Claude Code. Technical alignment: React, Tailwind CSS, WCAG 2.2 accessibility architectures.",
+    veracity: 99,
+    date: "Verified Candidate Profile"
   }
 };
 
@@ -109,7 +116,10 @@ export default function App() {
       let aiText = "The policy query has been evaluated against current Polish and European financial frameworks. General operational guidelines permit standard execution paths.";
       let sourceKey = 'aml';
 
-      if (currentInput.includes('aml') || currentInput.includes('transfer')) {
+      if (currentInput.includes('designer') || currentInput.includes('claudecode') || currentInput.includes('kasia') || currentInput.includes('poland')) {
+        aiText = "Found 1 matching candidate in the Warsaw Hub: Kasia Rytel. Over 8 years of enterprise B2B experience, expert in building scalable design systems, and deploying advanced AI workflows using Claude Code.";
+        sourceKey = 'designer';
+      } else if (currentInput.includes('aml') || currentInput.includes('transfer')) {
         aiText = "Based on HSBC Global AML Policy Section 3.14, any cross-border transaction over €10,000 requires strict secondary authorization. Ensure details are submitted to the regional compliance node within 24 hours.";
         sourceKey = 'aml';
       } else if (currentInput.includes('gdpr') || currentInput.includes('privacy') || currentInput.includes('data')) {
@@ -384,6 +394,17 @@ export default function App() {
                 <p className="text-xs text-[#DB0011] font-medium">{activeSource.section}</p>
                 <p className={`text-xs ${textMute} leading-relaxed`}>{activeSource.text}</p>
                 <p className={`text-xs ${nodeText}`}>{activeSource.date}</p>
+                {activeSource.title.includes('CV') && (
+                  <a
+                    href="https://myportfolio.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 flex items-center justify-center gap-2 w-full px-3 py-2 bg-[#DB0011] hover:bg-[#b8000e] text-white text-xs font-semibold rounded-md transition-colors"
+                  >
+                    <FileText size={13} />
+                    Open Original PDF Document
+                  </a>
+                )}
               </div>
 
               <div className={`rounded-md border ${srcCard} p-4 space-y-2 transition-colors duration-300`}>
