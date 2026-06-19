@@ -267,7 +267,10 @@ export default function App() {
             <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-2xl rounded-lg px-4 py-3 shadow-sm ${
                 msg.sender === 'user'
-                  ? 'bg-[#DB0011] text-white font-medium rounded-tr-none'
+                  ? t(theme,
+                      'bg-slate-800 border border-slate-700 border-l-2 border-l-[#DB0011] text-slate-100 font-medium rounded-tr-none',
+                      'bg-[#DB0011] text-white font-medium rounded-tr-none'
+                    )
                   : `${msgAiBg} rounded-tl-none`
               } transition-colors duration-300`}>
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
