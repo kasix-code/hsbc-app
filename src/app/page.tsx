@@ -269,7 +269,7 @@ export default function App() {
                 msg.sender === 'user'
                   ? t(theme,
                       'bg-slate-800 border border-slate-700 border-l-2 border-l-[#DB0011] text-slate-100 font-medium rounded-tr-none',
-                      'bg-[#DB0011] text-white font-medium rounded-tr-none'
+                      'bg-slate-100 border border-slate-200 border-r-2 border-r-slate-400 text-slate-800 font-medium rounded-tr-none'
                     )
                   : `${msgAiBg} rounded-tl-none`
               } transition-colors duration-300`}>
