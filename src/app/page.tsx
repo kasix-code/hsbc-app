@@ -116,7 +116,7 @@ export default function App() {
       let aiText = "The policy query has been evaluated against current Polish and European financial frameworks. General operational guidelines permit standard execution paths.";
       let sourceKey = 'aml';
 
-      if (currentInput.includes('designer') || currentInput.includes('claudecode') || currentInput.includes('kasia') || currentInput.includes('poland')) {
+      if (currentInput.includes('designer') || currentInput.includes('claudecode') || currentInput.includes('kasia') || currentInput.includes('poland') || currentInput.includes('find a lead designer')) {
         aiText = "Found 1 matching candidate in the Warsaw Hub: Kasia Rytel. Over 8 years of enterprise B2B experience, expert in building scalable design systems, and deploying advanced AI workflows using Claude Code.";
         sourceKey = 'designer';
       } else if (currentInput.includes('aml') || currentInput.includes('transfer')) {
