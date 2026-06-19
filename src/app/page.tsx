@@ -71,7 +71,11 @@ interface ComplianceWarning {
   text: string;
 }
 
-const SCOPE_TAGS = ['#AML', '#GDPR', '#KYC', '#Basel III'];
+const SCOPE_TAGS = [
+  '#AML', '#GDPR', '#KYC', '#Basel III',
+  '#FATF', '#MiFID II', '#PSD2', '#DORA',
+  '#CRR', '#AMLD6', '#EBA', '#ESG'
+];
 
 type Theme = 'dark' | 'light';
 
@@ -145,7 +149,10 @@ export default function App() {
       let aiText = "The policy query has been evaluated against current Polish and European financial frameworks. General operational guidelines permit standard execution paths.";
       let sourceKey: SourceKey = 'aml';
 
-      if (currentInput.includes('accordion')) {
+      if (currentInput.includes('tags')) {
+        aiText = "Predictive Grid Engine activated. The Quick Scope layout now utilizes a dual-row vertical scroll for optimal desktop mouse ergonomics. Notice how matching tags automatically float to the top-left positions and highlight in real-time as you type, while low-relevance tags shift downward.";
+        sourceKey = 'aml';
+      } else if (currentInput.includes('accordion')) {
         aiText = "Your cross-border query matched multiple regulatory documents across European and national frameworks. I have clustered 3 relevant sources in the inspector panel. Select any source below to review its verified legal passage.";
         sourceKey = 'designer';
         setShowAccordion(true);
@@ -301,16 +308,39 @@ export default function App() {
         {/* Input area */}
         <div className={`p-4 border-t ${border} ${footerBg} transition-colors duration-300`}>
           <form onSubmit={handleSend} className="max-w-4xl mx-auto space-y-3">
-            <div className={`flex flex-wrap gap-1.5 items-center text-xs ${textDim}`}>
-              <span>Scope:</span>
-              {SCOPE_TAGS.map(tag => (
-                <button key={tag} type="button"
-                  onClick={() => setInput(prev => prev ? `${prev} ${tag}` : tag)}
-                  className={`px-2 py-0.5 rounded border ${scopeBtn} transition-colors`}
-                >
-                  {tag}
-                </button>
-              ))}
+            <div className="space-y-1.5">
+              <span className={`text-xs ${textDim}`}>Quick Scope</span>
+              <div className="grid grid-cols-4 gap-1.5 max-h-[4.5rem] overflow-y-auto pr-0.5">
+                {[...SCOPE_TAGS]
+                  .sort((a, b) => {
+                    if (!input.trim()) return 0;
+                    const q = input.toLowerCase();
+                    const aMatch = a.toLowerCase().includes(q);
+                    const bMatch = b.toLowerCase().includes(q);
+                    if (aMatch && !bMatch) return -1;
+                    if (!aMatch && bMatch) return 1;
+                    return 0;
+                  })
+                  .map(tag => {
+                    const matches = input.trim() && tag.toLowerCase().includes(input.toLowerCase());
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => setInput(prev => prev ? `${prev} ${tag}` : tag)}
+                        className={`px-2 py-1 rounded border text-xs font-medium transition-all duration-200 truncate ${
+                          matches
+                            ? 'border-[#DB0011]/60 text-[#DB0011] bg-[#DB0011]/5 opacity-100'
+                            : input.trim()
+                              ? `${scopeBtn} opacity-40`
+                              : scopeBtn
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+              </div>
             </div>
 
             {complianceWarning && (
