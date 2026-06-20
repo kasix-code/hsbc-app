@@ -156,7 +156,7 @@ export default function App() {
         aiText = "Your cross-border query matched multiple regulatory documents across European and national frameworks. I have clustered 3 relevant sources in the inspector panel. Select any source below to review its verified legal passage.";
         sourceKey = 'designer';
         setShowAccordion(true);
-      } else if (currentInput.includes('designer') || currentInput.includes('claudecode') || currentInput.includes('kasia') || currentInput.includes('poland') || currentInput.includes('find a lead designer')) {
+      } else if (currentInput.includes('designer') || currentInput.includes('claudecode') || currentInput.includes('kasia') || currentInput.includes('poland') || currentInput.includes('find a lead designer') || currentInput.includes('my cv') || currentInput.includes(' cv') || currentInput === 'cv') {
         aiText = "Found 1 matching candidate in the Warsaw Hub: Kasia Rytel. Over 8 years of enterprise B2B experience, expert in building scalable design systems, and deploying advanced AI workflows using Claude Code.";
         sourceKey = 'designer';
       } else if (currentInput.includes('aml') || currentInput.includes('transfer')) {
